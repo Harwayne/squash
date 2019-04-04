@@ -1,5 +1,13 @@
 ## How to run it.
 
+1. Put the file `.ko.yaml` in the directory that where `ko` is running. The contents of the file are:
+
+    ```yaml
+    defaultBaseImage: ubuntu:bionic-20190307
+    ```
+
+1. `ko` apply the binary you are interested in.
+
 1. ```shell
    export TAGGED_VERSION=v0.5.7
    make clean
@@ -13,7 +21,6 @@
 1. Have `getremote(extPath: string)` in `editor/vscode/src/extension.ts` point at your newly built `squashctl`.
 
 1. 'Debug' the extension from VS code by pressing F5. This will open a new VS Code windown with the local copy of the extension running.
-
 
 <h1 align="center">
     <img src="https://s3.amazonaws.com/artifacts.solo.io/squash.png" alt="Squash" width="230" height="275">
