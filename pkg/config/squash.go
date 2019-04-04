@@ -130,10 +130,12 @@ func (s *Squash) GetDebugTargetContainerFromSpec(dbt *DebugTarget) error {
 	for _, podContainer := range dbt.Pod.Spec.Containers {
 		log.Debug(podContainer.Image)
 		log.Info(podContainer.Image)
-		if strings.HasPrefix(podContainer.Image, s.Container) {
+		if strings.HasPrefix(podContainer.Name, s.Container) {
+			//os.Stderr.WriteString(fmt.Sprintf("Adam - True %s, %s", s.Container, podContainer.Name))
 			dbt.Container = &podContainer
 			break
 		}
+		//os.Stderr.WriteString(fmt.Sprintf("Adam - False %s, %s", s.Container, podContainer.Name))
 	}
 	if dbt.Container == nil {
 		return errors.New(fmt.Sprintf("no such container image: %v", s.Container))

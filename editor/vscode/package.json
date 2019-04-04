@@ -1,5 +1,5 @@
 {
-  "version": "THIS_VALUE_WILL_BE_REPLACED_BY_BUILD_SCRIPT",
+  "version": "0.1.2",
   "name": "squash",
   "displayName": "Squash",
   "description": "Debug your applications running on Kubernetes",

@@ -59,7 +59,10 @@ export function deactivate() { }
 async function getremote(extPath: string): Promise<string> {
     let pathforbin = path.join(extPath, "binaries", getSquashInfo().version);
     let execpath = path.join(pathforbin, "squashctl");
-
+    execpath = "/usr/local/google/home/harwayne/bin/squashctl-linux";
+    execpath = "/usr/local/google/home/harwayne/go/src/github.com/solo-io/squash/_output/squashctl-linux";
+    return execpath;
+/*
     let ks = getSquashctl();
 
     // exit this early until release is smoothed out
@@ -91,7 +94,7 @@ async function getremote(extPath: string): Promise<string> {
         throw new Error("bad checksum for binary; download may be corrupted - please try again.");
     }
     fs.chmodSync(execpath, 0o755);
-    return execpath;
+    return execpath;*/
 }
 
 function hash(f: string): Promise<string> {
@@ -164,6 +167,19 @@ export class PodPickItem implements vscode.QuickPickItem {
         this.pod = pod;
     }
 }
+export class ContainerPickItem implements vscode.QuickPickItem {
+    label: string;
+    description: string;
+    detail?: string;
+
+    container: kube.Container;
+
+    constructor(container: kube.Container) {
+        this.label = `${container.name} (${container.image})`
+        this.description = "container";
+        this.container = container;
+    }
+}
 class SquashExtension {
 
     context: vscode.ExtensionContext;
@@ -228,6 +244,32 @@ class SquashExtension {
         }
         let selectedPod = item.pod;
 
+
+        ////////////////////
+
+        let containeroptions: vscode.QuickPickOptions = {
+            placeHolder: "Please select a container",
+        };
+
+        let containers: kube.Container[] = this.getContainers(selectedPod)
+        let containerItems: ContainerPickItem[] = containers.map(container => new ContainerPickItem(container));
+
+        let selectedContainer: ContainerPickItem;
+        if (containerItems.length == 1) {
+            selectedContainer = containerItems[0];
+        } else {
+            const containerItem = await vscode.window.showQuickPick(containerItems, containeroptions);
+            if (!containerItem) {
+                console.log("choosing container canceled - debugging canceled");
+                return;
+            }
+            selectedContainer = containerItem;
+        }
+
+
+        /////////////////////////
+
+
         // choose debugger to use
         const debuggerList = ["dlv", "java"];
         let debuggerItems: DebuggerPickItem[] = debuggerList.map(name => new DebuggerPickItem(name));
@@ -243,7 +285,7 @@ class SquashExtension {
         let debuggerName = chosenDebugger.debugger;
 
         // now invoke squashctl
-        let cmdSpec = `${squashpath} --machine --pod ${selectedPod.metadata.name} --namespace ${selectedPod.metadata.namespace} --debugger ${debuggerName}`;
+        let cmdSpec = `${squashpath} --machine --pod ${selectedPod.metadata.name} --namespace ${selectedPod.metadata.namespace} --container ${selectedContainer.container.name} --debugger ${debuggerName}`;
         console.log(`executing ${cmdSpec}`);
         let stdout = await exec(cmdSpec);
         let responseData = JSON.parse(stdout);
@@ -343,6 +385,10 @@ class SquashExtension {
         return podsjson.items;
     }
 
+    getContainers(pod: kube.Pod): kube.Container[] {
+        return pod.spec.containers
+    }
+
 }
 
 export class WorkspaceFolderPickItem implements vscode.QuickPickItem {
@@ -375,15 +421,18 @@ function kubectl_portforward(cmd: string): Promise<number> {
         };
         let child = shelljs.exec(cmd, handler);
         let stdout = "";
-        child.stdout.on('data', function (data) {
-            stdout += data;
-            let portRegexp = /from\s+.+:(\d+)\s+->/g;
-            let match = portRegexp.exec(stdout);
-            if (match !== null) {
-                resolved = true;
-                resolve(parseInt(match[1]));
-            }
-        });
+        let cstd: any = child.stdout;
+        if (cstd != null) {
+            cstd.on('data', function (data: any) {
+                stdout += data;
+                let portRegexp = /from\s+.+:(\d+)\s+->/g;
+                let match = portRegexp.exec(stdout);
+                if (match !== null) {
+                    resolved = true;
+                    resolve(parseInt(match[1]));
+                }
+            });
+        }
     });
 
     console.log(["port forwarding on", JSON.stringify(p)]);

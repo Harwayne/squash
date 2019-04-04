@@ -1,3 +1,20 @@
+## How to run it.
+
+1. ```shell
+   export TAGGED_VERSION=v0.5.7
+   make clean
+   make squashctl
+   ```
+
+1. Open up VS code in `editor/vscode`.
+
+1. Replace `version` in `editor/vscode/package.json` with a valid semver string (e.g. `0.1.2`).
+
+1. Have `getremote(extPath: string)` in `editor/vscode/src/extension.ts` point at your newly built `squashctl`.
+
+1. 'Debug' the extension from VS code by pressing F5. This will open a new VS Code windown with the local copy of the extension running.
+
+
 <h1 align="center">
     <img src="https://s3.amazonaws.com/artifacts.solo.io/squash.png" alt="Squash" width="230" height="275">
  </h1>
